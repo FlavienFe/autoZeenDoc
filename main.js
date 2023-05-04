@@ -20,7 +20,6 @@ async function clickOnElement(elem,p, f=p, x = null, y = null) {
   }
 
 async function keyBindListener(p){
-      await p.addScriptTag({path: "jquery.js"}) 
       await p.evaluate((id1,id2)=>{
         console.log("defining stampkeypressed")
         parent.window.stampkeypressed = 0
@@ -33,7 +32,7 @@ async function keyBindListener(p){
           }
           if (!event.ctrlKey){
             console.log(code)
-            parent.window.docNumber = Number(parent.window.$('div[style="height: 170px; margin: 0px; padding: 5px; background: none rgb(255, 185, 151); border: none; width: 110px;"]')[0]?.className.split(" ")[1][15]);
+            parent.window.docNumber = Number(parent.window.$('div[style="height: 170px; margin: 0px; padding: 5px; background: none rgb(255, 185, 151); border: none; width: 110px;"]')[0]?.className.split(" ")[1][15]); // a pour simple but de parse le chiffre de la page sélectionnée
             console.log("Doc Number:", parent.window.docNumber)
             if(code === "KeyV"){
               console.log("placement tampon validé")
@@ -52,22 +51,23 @@ async function keyBindListener(p){
 
 async function putStampDown(p, inFrame = 0){
   var f = p;
-  if(inFrame){
-    var currentframenb = await p.evaluate(()=>window.docNumber)
-    f = await p.waitForSelector("#Iframe_"+currentframenb).then((e)=>e.contentFrame());
-  }
   await p.waitForFunction("window.stampkeypressed",{timeout:false}).then(async ()=>{
+        if(inFrame){
+          var currentframenb = await p.evaluate(()=>window.docNumber)
+          f = await p.waitForSelector("#Iframe_"+currentframenb).then((e)=>e.contentFrame());
+        }
         var stampID = await p.evaluate(()=>window.stampkeypressed);
         await f.$eval("#Bouton_Ajouter_Tampon",(el)=>{el.click()})
         var frameHandle = await f.$("iframe[class='fancybox-iframe']");
         var frame = await frameHandle.contentFrame();
         await frame.waitForSelector(".Stamp")
-        await frame.$eval("#Stamp_"+stampID,(el)=>{el.click()}).catch(()=>{})
+        await new Promise(r => setTimeout(r, 400));
+        console.log("#Stamp_"+stampID)
+        await frame.$eval("#Stamp_"+stampID,(el)=>{el.click()}).catch((err)=>{console.log(err)})
         var elem = await f.waitForSelector("#ZDV_Pages")
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 800));
         await clickOnElement(elem, p, f);
         console.log("Tampon ID:" + stampID + " placé");
-        await new Promise(r => setTimeout(r, 800));
       }).catch((err)=>{console.log("le tampon n’a pas été placé: ", err)})
 }
 
@@ -97,32 +97,36 @@ async function putStampDown(p, inFrame = 0){
       var popup = await browser.waitForTarget((target)=> target.url().includes("View/docs_view.php") || target.url().includes("Search/Indexation.php"),{timeout:false})
       console.log("Popup trouvée")
       var popupPage = await popup.page();
+      await popupPage.addScriptTag({path: "jquery.js"}) 
       if (popup.url().includes("Search/Indexation.php")){
-        await new Promise(r => setTimeout(r, 2000));
-        var nbPages = await popupPage.$eval("#Conteneur_Iframes",(el)=>{console.log(el); return(el.children.length);})
+        await new Promise(r => setTimeout(r, 200));
+        //var nbPages = await popupPage.$eval("#Conteneur_Iframes",(el)=>{console.log(el); return(el.children.length);})
+        var nbPages = await popupPage.$eval(".column_documents",(el)=>el.children.length)
         console.log(nbPages)
         for(let i=0; i<nbPages; i++){
           console.log("adding listener " + i)
           await keyBindListener(await popupPage.waitForSelector("#Iframe_"+i).then((e)=>e.contentFrame())).catch((err)=>{console.log("erreur dans keybindlistener: ", err)})
         }
         await putStampDown(popupPage, 1).then(async()=>{
-          liste = await popupPage.$$(".column_documents>li").catch("page fermée");
+          var liste = await popupPage.$$(".column_documents>li").catch("page fermée");
           indexDoc = await popupPage.evaluate(()=>window.docNumber)
-          if(indexDoc<liste.length){
+          if(indexDoc<liste.length-1){
+            await new Promise(r => setTimeout(r, 500));
             liste[indexDoc + 1].click();
           }
           else{
-            await popupPage.close().then(async()=>{
-              while(!popupPage.isClosed()){
-              await new Promise(r => setTimeout(r, 200));
-              }
-            }).catch((err)=>{console.log("page fermée manuellement")});
+            //await popupPage.close().then(async()=>{
+              //while(!popupPage.isClosed()){
+              //await new Promise(r => setTimeout(r, 200));
+              //}
+            //}).catch((err)=>{console.log("page fermée")});
           }
-        });
+        }).catch((err)=>(console.log("page fermée à putStampDown")));
       }
       else{
         await keyBindListener(popupPage);
         await putStampDown(popupPage);
+        await new Promise(r => setTimeout(r, 500));
         await popupPage.close().then(async()=>{
           while(!popupPage.isClosed()){
            await new Promise(r => setTimeout(r, 200));
