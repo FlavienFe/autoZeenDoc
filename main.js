@@ -33,7 +33,6 @@ async function keyBindListener(p){
           if (!event.ctrlKey){
             console.log(code)
             parent.window.docNumber = Number(parent.window.$('div[style="height: 170px; margin: 0px; padding: 5px; background: none rgb(255, 185, 151); border: none; width: 110px;"]')[0]?.className.split(" ")[1][15]); // a pour simple but de parse le chiffre de la page sélectionnée
-            console.log("Doc Number:", parent.window.docNumber)
             if(code === "KeyV"){
               console.log("placement tampon validé")
               parent.window.stampkeypressed = id1
@@ -97,8 +96,8 @@ async function putStampDown(p, inFrame = 0){
       var popup = await browser.waitForTarget((target)=> target.url().includes("View/docs_view.php") || target.url().includes("Search/Indexation.php"),{timeout:false})
       console.log("Popup trouvée")
       var popupPage = await popup.page();
-      await popupPage.addScriptTag({path: "jquery.js"}) 
       if (popup.url().includes("Search/Indexation.php")){
+        await popupPage.addScriptTag({path: "jquery.js"}) 
         await new Promise(r => setTimeout(r, 200));
         //var nbPages = await popupPage.$eval("#Conteneur_Iframes",(el)=>{console.log(el); return(el.children.length);})
         var nbPages = await popupPage.$eval(".column_documents",(el)=>el.children.length)
