@@ -42,6 +42,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# User Data directory
+ZeenDocData/
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 

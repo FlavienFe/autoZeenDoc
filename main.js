@@ -5,7 +5,7 @@ const process = require('node:process');
 const stamp_id_valide = 1; // ID du tampon
 const stamp_id_refuse = 2; // ID du tampon
 const chemin_chrome = "C:\\Program\ Files\\Google\\Chrome\\Application\\chrome.exe"; // Normalement ne change pas
-const chemin_userData = "C:\\Users\\FlFe\\AppData\\Local\\Google\\Chrome\\ZeenDocData"; // Profile Path (On peut créer un dossier vide)
+const chemin_userData = ".\\ZeenDocData"; // Profile Path (On peut créer un dossier vide)
 
 async function clickOnElement(elem,p, f=p, x = null, y = null) {
     const rect = await f.evaluate(el => {
