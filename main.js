@@ -2,8 +2,13 @@ const pptr = require('puppeteer-core');
 const find = require('find-process');
 const process = require('node:process');
 
-const stamp_id_valide = 1; // ID du tampon
-const stamp_id_refuse = 2; // ID du tampon
+const keyBinds = {
+  //keyCode: id_tampon
+  "KeyV":1,
+  "KeyR":2,
+  "KeyN":-1,
+}
+
 const chemin_chrome = "C:\\Program\ Files\\Google\\Chrome\\Application\\chrome.exe"; // Normalement ne change pas
 const chemin_userData = ".\\ZeenDocData"; // Profile Path (On peut créer un dossier vide)
 
@@ -20,7 +25,7 @@ async function clickOnElement(elem,p, f=p, x = null, y = null) {
   }
 
 async function keyBindListener(p){
-      await p.evaluate((id1,id2)=>{
+      await p.evaluate((kb,id1,id2,k1,k2,k3)=>{
         console.log("defining stampkeypressed")
         parent.window.stampkeypressed = 0
         parent.window.docNumber = 0
@@ -31,42 +36,48 @@ async function keyBindListener(p){
             return;
           }
           if (!event.ctrlKey){
+            for (var prop in kb){
+              if(code === prop){
+                console.log("placement tampon " + kb[prop])
+                parent.window.stampkeypressed = kb[prop]
+              }
+            }
             console.log(code)
             parent.window.docNumber = Number(parent.window.$('div[style="height: 170px; margin: 0px; padding: 5px; background: none rgb(255, 185, 151); border: none; width: 110px;"]')[0]?.className.split(" ")[1][15]); // a pour simple but de parse le chiffre de la page sélectionnée
-            if(code === "KeyV"){
-              console.log("placement tampon validé")
-              parent.window.stampkeypressed = id1
-            }
-            if(code === "KeyR"){
-              console.log("placement tampon refusé")
-              parent.window.stampkeypressed = id2
-            }
           }else{
             return;
           }
         });
-      },stamp_id_valide,stamp_id_refuse)
+      },keyBinds,stamp_id_valide,stamp_id_refuse,key_valide,key_refuse,key_note)
 }
 
 async function putStampDown(p, inFrame = 0){
   var f = p;
-  await p.waitForFunction("window.stampkeypressed",{timeout:false}).then(async ()=>{
+  return await p.waitForFunction("window.stampkeypressed",{timeout:false}).then(async ()=>{
         if(inFrame){
           var currentframenb = await p.evaluate(()=>window.docNumber)
           f = await p.waitForSelector("#Iframe_"+currentframenb).then((e)=>e.contentFrame());
         }
         var stampID = await p.evaluate(()=>window.stampkeypressed);
-        await f.$eval("#Bouton_Ajouter_Tampon",(el)=>{el.click()})
-        var frameHandle = await f.$("iframe[class='fancybox-iframe']");
-        var frame = await frameHandle.contentFrame();
-        await frame.waitForSelector(".Stamp")
-        await new Promise(r => setTimeout(r, 400));
-        console.log("#Stamp_"+stampID)
-        await frame.$eval("#Stamp_"+stampID,(el)=>{el.click()}).catch((err)=>{console.log(err)})
-        var elem = await f.waitForSelector("#ZDV_Pages")
-        await new Promise(r => setTimeout(r, 800));
-        await clickOnElement(elem, p, f);
-        console.log("Tampon ID:" + stampID + " placé");
+        if (stampID>=0){
+          await f.$eval("#Bouton_Ajouter_Tampon",(el)=>{el.click()})
+          var frameHandle = await f.$("iframe[class='fancybox-iframe']");
+          var frame = await frameHandle.contentFrame();
+          await frame.waitForSelector(".Stamp")
+          await new Promise(r => setTimeout(r, 400));
+          console.log("#Stamp_"+stampID)
+          await frame.$eval("#Stamp_"+stampID,(el)=>{el.click()}).catch((err)=>{console.log(err)})
+          var elem = await f.waitForSelector("#ZDV_Pages")
+          await new Promise(r => setTimeout(r, 800));
+          await clickOnElement(elem, p, f);
+          console.log("Tampon ID:" + stampID + " placé");
+        }else{
+          if(stampID = -1){
+            await f.$eval("#Bouton_Ajouter_Commentaire",(el)=>{el.click()})
+          }
+        }
+        console.log({stampID})
+        return stampID
       }).catch((err)=>{console.log("le tampon n’a pas été placé: ", err)})
 }
 
@@ -106,10 +117,11 @@ async function putStampDown(p, inFrame = 0){
           console.log("adding listener " + i)
           await keyBindListener(await popupPage.waitForSelector("#Iframe_"+i).then((e)=>e.contentFrame())).catch((err)=>{console.log("erreur dans keybindlistener: ", err)})
         }
-        await putStampDown(popupPage, 1).then(async()=>{
+        await putStampDown(popupPage, 1).then(async(stampID)=>{
           var liste = await popupPage.$$(".column_documents>li").catch("page fermée");
           indexDoc = await popupPage.evaluate(()=>window.docNumber)
-          if(indexDoc<liste.length-1){
+          console.log({stampID})
+          if(indexDoc<liste.length-1 && stampID>=0){
             await new Promise(r => setTimeout(r, 500));
             liste[indexDoc + 1].click();
           }
