@@ -124,7 +124,7 @@ async function putStampDown(p, inFrame = 0){
           var liste = await popupPage.$$(".column_documents>li").catch("page fermée");
           indexDoc = await popupPage.evaluate(()=>window.docNumber)
           console.log({stampID})
-          popupPage.$eval('div[style="height: 170px; margin: 0px; padding: 5px; background: none rgb(255, 185, 151); border: none; width: 110px;"]>*>div',(el)=>{el.innerHTML = "traité"})
+          popupPage.$eval('div[style="height: 170px; margin: 0px; padding: 5px; background: none rgb(255, 185, 151); border: none; width: 110px;"]>*>div',(el)=>{el.innerHTML = "Traité"})
           if(indexDoc<liste.length-1 && stampID>=0){
             await new Promise(r => setTimeout(r, 500));
             liste[indexDoc + 1].click();
