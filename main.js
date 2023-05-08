@@ -4,11 +4,13 @@ const process = require('node:process');
 
 const keyBinds = {
   //keyCode: id_tampon
+  //"KeyV":32,
+  //"KeyR":44,
+  //"KeyN":-1,
   "KeyV":1,
   "KeyR":2,
   "KeyN":-1,
 }
-
 const chemin_chrome = "C:\\Program\ Files\\Google\\Chrome\\Application\\chrome.exe"; // Normalement ne change pas
 const chemin_userData = ".\\ZeenDocData"; // Profile Path (On peut créer un dossier vide)
 
@@ -48,7 +50,7 @@ async function keyBindListener(p){
             return;
           }
         });
-      },keyBinds,stamp_id_valide,stamp_id_refuse,key_valide,key_refuse,key_note)
+      },keyBinds)
 }
 
 async function putStampDown(p, inFrame = 0){
@@ -78,7 +80,7 @@ async function putStampDown(p, inFrame = 0){
         }
         console.log({stampID})
         return stampID
-      }).catch((err)=>{console.log("le tampon n’a pas été placé: ", err)})
+      }).catch((err)=>{console.log("le tampon n’a pas été placé: ")})
 }
 
 (async ()=>{
@@ -90,6 +92,7 @@ async function putStampDown(p, inFrame = 0){
     //}
   //})
   pptr.launch({
+    pipe:true,
     defaultViewport:false,
     headless:false,
     executablePath: chemin_chrome,
@@ -115,7 +118,7 @@ async function putStampDown(p, inFrame = 0){
         console.log(nbPages)
         for(let i=0; i<nbPages; i++){
           console.log("adding listener " + i)
-          await keyBindListener(await popupPage.waitForSelector("#Iframe_"+i).then((e)=>e.contentFrame())).catch((err)=>{console.log("erreur dans keybindlistener: ", err)})
+          await keyBindListener(await popupPage.waitForSelector("#Iframe_"+i).then((e)=>e.contentFrame())).catch((err)=>{console.log("erreur dans keybindlistener: ")})
         }
         await putStampDown(popupPage, 1).then(async(stampID)=>{
           var liste = await popupPage.$$(".column_documents>li").catch("page fermée");
