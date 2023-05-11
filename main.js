@@ -4,12 +4,13 @@ const process = require('node:process');
 
 const keyBinds = {
   //keyCode: id_tampon
-  //"KeyV":32,
-  //"KeyR":44,
-  //"KeyN":-1,
-  "KeyV":1,
-  "KeyR":2,
+  "KeyV":32,
+  "KeyR":44,
+  "KeyA": 25,
   "KeyN":-1,
+  //"KeyV":1,
+  //"KeyR":2,
+  //"KeyN":-1,
 }
 const chemin_chrome = "C:\\Program\ Files\\Google\\Chrome\\Application\\chrome.exe"; // Normalement ne change pas
 const chemin_userData = ".\\ZeenDocData"; // Profile Path (On peut créer un dossier vide)
@@ -139,14 +140,15 @@ async function putStampDown(p, inFrame = 0){
       }
       else{
         await keyBindListener(popupPage);
-        await putStampDown(popupPage);
-        await new Promise(r => setTimeout(r, 500));
-        await popupPage.close().then(async()=>{
-          while(!popupPage.isClosed()){
-           await new Promise(r => setTimeout(r, 200));
+        await putStampDown(popupPage).then(async(stampID)=>{
+          if(stampID>=0){
+            await new Promise(r => setTimeout(r, 500));
+            await popupPage.close()
+            while(!popupPage.isClosed()){
+              await new Promise(r => setTimeout(r, 200));
+            }
           }
         }).catch((err)=>{console.log("page fermée manuellement")});
-        
       }
     }while(browser)
   }).catch(async error =>{console.log(error)});
