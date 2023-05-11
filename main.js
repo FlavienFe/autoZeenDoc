@@ -7,6 +7,7 @@ const keyBinds = {
   "KeyV":32,
   "KeyR":44,
   "KeyA": 25,
+  "KeyT": 26,
   "KeyN":-1,
   //"KeyV":1,
   //"KeyR":2,
@@ -21,7 +22,7 @@ async function clickOnElement(elem,p, f=p, x = null, y = null) {
       return { top, left, width, height };
     }, elem);
     // Use given position or default to center
-    const _x = x !== null ? x : rect.width / 2;
+    const _x = x !== null ? rect.width-200 : rect.width / 2;
     const _y = y !== null ? y : rect.height / 2;
 
     await p.mouse.click(rect.left + _x, rect.top + _y);
@@ -51,7 +52,7 @@ async function keyBindListener(p){
             return;
           }
         });
-      },keyBinds)
+      },keyBinds).catch((err)=>console.log("Erreur dans définition des variables tampon"))
 }
 
 async function putStampDown(p, inFrame = 0){
@@ -70,13 +71,16 @@ async function putStampDown(p, inFrame = 0){
           await new Promise(r => setTimeout(r, 400));
           console.log("#Stamp_"+stampID)
           await frame.$eval("#Stamp_"+stampID,(el)=>{el.click()}).catch((err)=>{console.log(err)})
-          var elem = await f.waitForSelector("#ZDV_Pages")
+          var elem = await f.waitForSelector(".ZDV_Page")
           await new Promise(r => setTimeout(r, 800));
           await clickOnElement(elem, p, f);
           console.log("Tampon ID:" + stampID + " placé");
         }else{
           if(stampID = -1){
             await f.$eval("#Bouton_Ajouter_Commentaire",(el)=>{el.click()})
+            var elem = await f.waitForSelector(".ZDV_Page")
+            await new Promise(r => setTimeout(r, 800));
+            await clickOnElement(elem, p, f,0,0);
           }
         }
         console.log({stampID})
@@ -116,9 +120,12 @@ async function putStampDown(p, inFrame = 0){
         await new Promise(r => setTimeout(r, 200));
         //var nbPages = await popupPage.$eval("#Conteneur_Iframes",(el)=>{console.log(el); return(el.children.length);})
         var nbPages = await popupPage.$eval(".column_documents",(el)=>el.children.length)
-        for(let i=0; i<nbPages; i++){
+        for(let i=0; i<Math.min(4,nbPages); i++){
           console.log("Écoute page " + i)
-          await keyBindListener(await popupPage.waitForSelector("#Iframe_"+i).then((e)=>e.contentFrame())).catch((err)=>{console.log("erreur dans keybindlistener")})
+          popupPage.waitForSelector("#Iframe_"+i,{timeout: false}).then(async(e)=>{
+            let cf = await e.contentFrame()
+            keyBindListener(cf).catch((err)=>{console.log("erreur dans keybindlistener n"+ i, u)})
+          })
         }
         await putStampDown(popupPage, 1).then(async(stampID)=>{
           var liste = await popupPage.$$(".column_documents>li").catch("page fermée");
@@ -139,7 +146,7 @@ async function putStampDown(p, inFrame = 0){
         }).catch((err)=>(console.log("page fermée à putStampDown")));
       }
       else{
-        await keyBindListener(popupPage);
+        await keyBindListener(popupPage).catch((err)=>console.log("Erreur dans keybindlistener"));
         await putStampDown(popupPage).then(async(stampID)=>{
           if(stampID>=0){
             await new Promise(r => setTimeout(r, 500));
@@ -150,6 +157,6 @@ async function putStampDown(p, inFrame = 0){
           }
         }).catch((err)=>{console.log("page fermée manuellement")});
       }
-    }while(browser)
-  }).catch(async error =>{console.log(error)});
+    }while(true)
+  }).catch(async error =>{console.log("erreur globale: " + error)});
 })();
