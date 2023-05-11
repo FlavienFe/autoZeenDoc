@@ -4,14 +4,14 @@ const process = require('node:process');
 
 const keyBinds = {
   //keyCode: id_tampon
-  "KeyV":32,
-  "KeyR":44,
-  "KeyA": 25,
-  "KeyT": 26,
-  "KeyN":-1,
-  //"KeyV":1,
-  //"KeyR":2,
+  //"KeyV":32,
+  //"KeyR":44,
+  //"KeyQ": 25,
+  //"KeyT": 26,
   //"KeyN":-1,
+  "KeyV":1,
+  "KeyR":2,
+  "KeyN":-1,
 }
 const chemin_chrome = "C:\\Program\ Files\\Google\\Chrome\\Application\\chrome.exe"; // Normalement ne change pas
 const chemin_userData = ".\\ZeenDocData"; // Profile Path (On peut créer un dossier vide)
@@ -23,7 +23,7 @@ async function clickOnElement(elem,p, f=p, x = null, y = null) {
     }, elem);
     // Use given position or default to center
     const _x = x !== null ? rect.width-200 : rect.width / 2;
-    const _y = y !== null ? y : rect.height / 2;
+    const _y = y !== null ? y : rect.height / 10;
 
     await p.mouse.click(rect.left + _x, rect.top + _y);
   }
@@ -154,6 +154,12 @@ async function putStampDown(p, inFrame = 0){
             while(!popupPage.isClosed()){
               await new Promise(r => setTimeout(r, 200));
             }
+            const unopenned = await page.$$eval("tr.TableResultsElementRowBody:not(.ptr-clicked)",(els)=>{
+              console.log(els);
+              els[0].childNodes[1].click();
+            })
+            console.log(unopenned)
+
           }
         }).catch((err)=>{console.log("page fermée manuellement")});
       }
