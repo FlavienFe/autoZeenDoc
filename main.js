@@ -4,12 +4,7 @@ const process = require('node:process');
 
 const copyStamp = false
 const keyBinds = {
-  //keyCode: id_tampon
-  //"KeyV":32,
-  //"KeyR":44,
-  //"KeyQ": 25,
-  //"KeyT": 26,
-  //"KeyN":-1,
+  //keyCode: id_tampon,
   "KeyV":1,
   "KeyR":2,
   "KeyN":-1,
